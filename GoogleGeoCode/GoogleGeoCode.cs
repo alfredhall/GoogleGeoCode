@@ -161,7 +161,12 @@ namespace alfredhall
 
 
             String jsonGeoCodeResponse = null;
+            System.IO.StreamWriter outputFile = null;
 
+            if (argOutputFile != null)
+            {
+                outputFile = new StreamWriter(argOutputFile);
+            }
 
 
             //if user did not specifiy an address or an input file containing addresses
@@ -174,7 +179,7 @@ namespace alfredhall
 
                 if (argOutputFile != null)
                 {
-                    WriteResultsToFile(jsonGeoCodeResponse,argOutputFile);
+                    WriteResultsToFile(argAddress, jsonGeoCodeResponse, outputFile);
                 }
                 else
                 {
@@ -189,7 +194,6 @@ namespace alfredhall
             //read each line of file, then geocode, then print to file (or screen by default)
             if( argInputFile != null)
             {
-
                 
                     using (StreamReader sr = new StreamReader(argInputFile))
                     {
@@ -200,7 +204,7 @@ namespace alfredhall
 
                             if (argOutputFile != null)
                             {
-                                WriteResultsToFile(jsonGeoCodeResponse, argOutputFile);
+                                WriteResultsToFile(argAddress, jsonGeoCodeResponse, outputFile);
                             }
                             else
                             {
@@ -213,11 +217,15 @@ namespace alfredhall
 
             }
 
-            
 
 
 
 
+            if (outputFile != null)
+            {
+                outputFile.Flush();
+                outputFile.Close();
+            }
 
 
 
@@ -255,10 +263,34 @@ namespace alfredhall
 
 
 
-        private static void WriteResultsToFile(String jsonGeoCodeResponse, String outputFilePath)
+        private static void WriteResultsToFile(String searchAddress, String jsonGeoCodeResponse, StreamWriter outputFile)
         {
-            
-            return;
+            //deserialize the json response
+            GoogleMapsResponse googResp = JsonConvert.DeserializeObject<GoogleMapsResponse>(jsonGeoCodeResponse);
+
+
+            if (googResp.status == "OK")
+            {
+                if (googResp.results.Length > 0)
+                {
+                    for (int i = 0; i < googResp.results.Length; i++)
+                    {
+                        if (googResp.results[i].partial_match != null &&
+                            googResp.results[i].partial_match.CompareTo("true") == 0)
+                        {
+                            outputFile.WriteLine(searchAddress + "|" + "|");
+                        }
+                        else
+                        {
+                            outputFile.WriteLine(searchAddress + "|" + googResp.results[i].formatted_address + "|" + googResp.results[i].geometry.location.lat + "|" + googResp.results[i].geometry.location.lng);
+                        }
+                    }
+                }
+                else
+                {
+                    outputFile.WriteLine(searchAddress + "|" + "|");
+                }
+            }
         }
 
 
