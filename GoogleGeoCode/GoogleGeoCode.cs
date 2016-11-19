@@ -46,7 +46,13 @@ namespace alfredhall
         public GoogleMapsLocation location;
         public String location_type;
         public GoogleMapsViewport viewport;
-        public Object[] bounds;
+        public GoogleMapsBounds bounds;
+    }
+
+    class GoogleMapsBounds
+    {
+        public GoogleMapsLocation northEast;
+        public GoogleMapsLocation southWest;
     }
 
     class GoogleMapsLocation
@@ -115,7 +121,8 @@ namespace alfredhall
                         //help 
                         case "-h":
                             PrintUsageExample();
-                            break;
+                            return;
+                            
 
                         //input file argument
                         case "-i":
@@ -145,9 +152,9 @@ namespace alfredhall
                         
                         //invalid argument detected
                         default:
-                            throw new Exception("Invalid argument specified!");
                            
-                    }//endof argument switch statement
+
+                            throw new Exception("Invalid argument specified!");                    }//endof argument switch statement
                 }//endof argument loop
             }//endof test if arguments exist
 
@@ -192,6 +199,7 @@ namespace alfredhall
                             jsonGeoCodeResponse = GeoCodeAddress(argAddress, apiKey);
 
                             Console.WriteLine(argAddress);
+                        Console.WriteLine(jsonGeoCodeResponse);
 
                             if (argOutputFile != null)
                             {
