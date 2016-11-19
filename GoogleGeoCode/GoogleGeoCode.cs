@@ -178,7 +178,7 @@ namespace alfredhall
                 }
                 else
                 {
-                    WriteResultsToConsole(jsonGeoCodeResponse);
+                    WriteResultsToConsole(argAddress, jsonGeoCodeResponse);
                 }
 
             }
@@ -198,16 +198,13 @@ namespace alfredhall
                         {
                             jsonGeoCodeResponse = GeoCodeAddress(argAddress, apiKey);
 
-                            Console.WriteLine(argAddress);
-                        Console.WriteLine(jsonGeoCodeResponse);
-
                             if (argOutputFile != null)
                             {
                                 WriteResultsToFile(jsonGeoCodeResponse, argOutputFile);
                             }
                             else
                             {
-                                WriteResultsToConsole(jsonGeoCodeResponse);
+                                WriteResultsToConsole(argAddress, jsonGeoCodeResponse);
                             }
 
                         }
@@ -265,7 +262,7 @@ namespace alfredhall
         }
 
 
-        private static void WriteResultsToConsole(String jsonGeoCodeResponse)
+        private static void WriteResultsToConsole(String searchAddress, String jsonGeoCodeResponse)
         {
             //deserialize the json response
             GoogleMapsResponse googResp = JsonConvert.DeserializeObject<GoogleMapsResponse>(jsonGeoCodeResponse);
@@ -277,8 +274,17 @@ namespace alfredhall
                 {
                     for (int i = 0; i < googResp.results.Length; i++)
                     {
-                        Console.Write("lat = " + googResp.results[i].geometry.location.lat);
-                        Console.WriteLine("lng = " + googResp.results[i].geometry.location.lng);
+                        if (googResp.results[i].partial_match != null && 
+                            googResp.results[i].partial_match.CompareTo("true") == 0)
+                        {
+                            Console.WriteLine("no exact match found for: " + searchAddress);
+                        }
+                        else
+                        {
+                            Console.WriteLine(googResp.results[i].formatted_address);
+                            Console.Write("lat = " + googResp.results[i].geometry.location.lat);
+                            Console.WriteLine("lng = " + googResp.results[i].geometry.location.lng);
+                        }
                     }
                 }
                 else
