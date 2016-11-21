@@ -21,6 +21,7 @@ namespace alfredhall
 
         public GoogleMapsResult[] results;
         public String status;
+        public String error_message;
     }
 
     class GoogleMapsResult
@@ -312,6 +313,10 @@ namespace alfredhall
                     outputFile.WriteLine(searchAddress + "|" + "|" + "|");
                 }
             }
+            else
+            {
+                Console.WriteLine(googResp.error_message);
+            }
         }
 
 
@@ -327,7 +332,7 @@ namespace alfredhall
                 {
                     for (int i = 0; i < googResp.results.Length; i++)
                     {
-                        if (googResp.results[i].partial_match != null && 
+                        if (googResp.results[i].partial_match != null &&
                             googResp.results[i].partial_match.CompareTo("true") == 0)
                         {
                             Console.WriteLine("partial match found for: " + searchAddress);
@@ -344,10 +349,10 @@ namespace alfredhall
                         }
                     }
                 }
-                else
-                {
-                    Console.WriteLine("zero results returned");
-                }
+            }
+            else
+            {
+                Console.WriteLine(googResp.error_message);
             }
 
             return;
