@@ -256,7 +256,7 @@ namespace alfredhall
 
         private static void PrintUsageExample()
         {
-            Console.WriteLine("\nUsage: GoogleGeoCode [[-a Address]|[-i InputFile]] [-o OutputFile]");
+            Console.WriteLine("\nUsage: GoogleGeoCode [[-a Address]|[-i InputFile]] [-o OutputFile] [-j]");
         }
 
 
