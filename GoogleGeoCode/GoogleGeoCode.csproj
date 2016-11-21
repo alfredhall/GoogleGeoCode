@@ -7,8 +7,8 @@
     <ProjectGuid>{89FA28F6-30D9-47A2-AFA0-0CD5E04E2487}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ConsoleApplication1</RootNamespace>
-    <AssemblyName>ConsoleApplication1</AssemblyName>
+    <RootNamespace>com.alfredhall.GoogleGeoCode</RootNamespace>
+    <AssemblyName>GoogleGeoCode</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

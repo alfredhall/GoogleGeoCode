@@ -94,6 +94,9 @@ namespace alfredhall
             // -i   Input File one address per line
             String argInputFile = null;
 
+            // -j   Display json output to screen
+            bool displayJsonOutput = false;
+
             // -o   Output File latitute/longitude pair per line
             String argOutputFile = null; 
 
@@ -140,6 +143,11 @@ namespace alfredhall
                                 throw new Exception("Input file does not exist!");
                             }
                             break;
+
+                        //display json response to console
+                        case "-j":
+                            displayJsonOutput = true;
+                            break;
                         
                         //output file argument
                         case "-o":
@@ -177,6 +185,11 @@ namespace alfredhall
                 argAddress = Console.ReadLine();
                 jsonGeoCodeResponse = GeoCodeAddress(argAddress, apiKey);
 
+                if (displayJsonOutput == true)
+                {
+                    Console.WriteLine(jsonGeoCodeResponse);
+                }
+
                 if (argOutputFile != null)
                 {
                     WriteResultsToFile(argAddress, jsonGeoCodeResponse, outputFile);
@@ -201,6 +214,11 @@ namespace alfredhall
                         while ((argAddress = sr.ReadLine()) != null)
                         {
                             jsonGeoCodeResponse = GeoCodeAddress(argAddress, apiKey);
+
+                            if (displayJsonOutput == true)
+                            {
+                                Console.WriteLine(jsonGeoCodeResponse);
+                            }
 
                             if (argOutputFile != null)
                             {
@@ -243,6 +261,9 @@ namespace alfredhall
 
         private static String GeoCodeAddress(String argAddress, String apiKey)
         {
+            //url encode argument address
+            argAddress = WebUtility.UrlEncode(argAddress);
+
             string requestUri = "https://maps.googleapis.com/maps/api/geocode/json?" + "address=" + argAddress + "&key=" + apiKey;
 
             WebRequest request = WebRequest.Create(requestUri);
@@ -271,24 +292,24 @@ namespace alfredhall
 
             if (googResp.status == "OK")
             {
-                if (googResp.results.Length > 0)
+                if (googResp.results.Length >= 0)
                 {
                     for (int i = 0; i < googResp.results.Length; i++)
                     {
                         if (googResp.results[i].partial_match != null &&
                             googResp.results[i].partial_match.CompareTo("true") == 0)
                         {
-                            outputFile.WriteLine(searchAddress + "|" + "|");
+                            outputFile.WriteLine(searchAddress + "|partial|" + googResp.results[i].formatted_address + "|" + googResp.results[i].geometry.location.lat + "|" + googResp.results[i].geometry.location.lng);
                         }
                         else
                         {
-                            outputFile.WriteLine(searchAddress + "|" + googResp.results[i].formatted_address + "|" + googResp.results[i].geometry.location.lat + "|" + googResp.results[i].geometry.location.lng);
+                            outputFile.WriteLine(searchAddress + "|exact|" + googResp.results[i].formatted_address + "|" + googResp.results[i].geometry.location.lat + "|" + googResp.results[i].geometry.location.lng);
                         }
                     }
                 }
                 else
                 {
-                    outputFile.WriteLine(searchAddress + "|" + "|");
+                    outputFile.WriteLine(searchAddress + "|" + "|" + "|");
                 }
             }
         }
@@ -309,13 +330,17 @@ namespace alfredhall
                         if (googResp.results[i].partial_match != null && 
                             googResp.results[i].partial_match.CompareTo("true") == 0)
                         {
-                            Console.WriteLine("no exact match found for: " + searchAddress);
+                            Console.WriteLine("partial match found for: " + searchAddress);
+                            Console.WriteLine(googResp.results[i].formatted_address);
+                            Console.Write("lat = " + googResp.results[i].geometry.location.lat);
+                            Console.WriteLine(", lng = " + googResp.results[i].geometry.location.lng);
                         }
                         else
                         {
+                            Console.WriteLine("exact match found for: " + searchAddress);
                             Console.WriteLine(googResp.results[i].formatted_address);
                             Console.Write("lat = " + googResp.results[i].geometry.location.lat);
-                            Console.WriteLine("lng = " + googResp.results[i].geometry.location.lng);
+                            Console.WriteLine(", lng = " + googResp.results[i].geometry.location.lng);
                         }
                     }
                 }
