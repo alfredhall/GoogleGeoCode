@@ -265,17 +265,34 @@ namespace alfredhall
             //url encode argument address
             argAddress = WebUtility.UrlEncode(argAddress);
 
+            Console.WriteLine(argAddress);
+
             string requestUri = "https://maps.googleapis.com/maps/api/geocode/json?" + "address=" + argAddress + "&key=" + apiKey;
 
             WebRequest request = WebRequest.Create(requestUri);
-            WebResponse response = request.GetResponse();
 
-            //display the http status of the response
-            //Console.WriteLine(((HttpWebResponse)response).StatusDescription);
+            WebResponse response = null;
+            Stream dataStream = null;
+            StreamReader reader = null;
+            string responseFromServer = null;
 
-            Stream dataStream = response.GetResponseStream();
-            StreamReader reader = new StreamReader(dataStream);
-            string responseFromServer = reader.ReadToEnd();
+            //to do , if the following line throws an exception, ive seen 500 thrown,then retry a few times
+            //and if still receiving the error, exit the program
+            try
+            {
+                response = request.GetResponse();
+                dataStream = response.GetResponseStream();
+                reader = new StreamReader(dataStream);
+                responseFromServer = reader.ReadToEnd();
+            }
+            catch (Exception ex)
+            {
+                //todo  RETRY a few times
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(((HttpWebResponse)response).StatusDescription);
+                return null;
+            }
+            
 
             reader.Close();
             response.Close();
