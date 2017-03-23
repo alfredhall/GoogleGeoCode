@@ -289,7 +289,10 @@ namespace alfredhall
             {
                 //todo  RETRY a few times
                 Console.WriteLine(ex.Message);
-                Console.WriteLine(((HttpWebResponse)response).StatusDescription);
+                if (response != null && ((HttpWebResponse)response).StatusDescription != null)
+                { 
+                    Console.WriteLine(((HttpWebResponse)response).StatusDescription);
+                }
                 return null;
             }
             
