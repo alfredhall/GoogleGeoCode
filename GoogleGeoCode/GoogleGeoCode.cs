@@ -18,10 +18,10 @@ namespace alfredhall
 
     class GoogleMapsResponse
     {
-
         public GoogleMapsResult[] results;
         public String status;
         public String error_message;
+        public String jsonServerResponse;
     }
 
     class GoogleMapsResult
@@ -92,6 +92,8 @@ namespace alfredhall
             // -a   Address, single address entered on command line
             String argAddress = null;
 
+            // -h   Help, display help menu
+
             // -i   Input File one address per line
             String argInputFile = null;
 
@@ -158,19 +160,24 @@ namespace alfredhall
                                 i++;
                             }
                             break;
-                        
+
                         //invalid argument detected
                         default:
-                           
+                            {
+                                throw new Exception("Invalid argument specified!");
+                            }
 
-                            throw new Exception("Invalid argument specified!");                    }//endof argument switch statement
+                    }//endof argument switch statement
+
                 }//endof argument loop
             }//endof test if arguments exist
 
 
 
-            String jsonGeoCodeResponse = null;
+            GoogleMapsResponse googleResponse = null;
             System.IO.StreamWriter outputFile = null;
+
+
 
             if (argOutputFile != null)
             {
@@ -184,20 +191,24 @@ namespace alfredhall
             {
                 Console.WriteLine("Please enter an address ex: 1600+Amphitheatre+Parkway,+Mountain+View,+CA");
                 argAddress = Console.ReadLine();
-                jsonGeoCodeResponse = GeoCodeAddress(argAddress, apiKey);
+                googleResponse = GeoCodeAddress(argAddress, apiKey);
 
                 if (displayJsonOutput == true)
                 {
-                    Console.WriteLine(jsonGeoCodeResponse);
+                    Console.WriteLine(googleResponse.jsonServerResponse);
                 }
 
-                if (argOutputFile != null)
+                if (argOutputFile != null )
                 {
-                    WriteResultsToFile(argAddress, jsonGeoCodeResponse, outputFile);
+                    
+                        WriteResultsToFile(argAddress, googleResponse, outputFile);
+                    
                 }
                 else
                 {
-                    WriteResultsToConsole(argAddress, jsonGeoCodeResponse);
+                    
+                        WriteResultsToConsole(argAddress, googleResponse);
+                    
                 }
 
             }
@@ -214,20 +225,21 @@ namespace alfredhall
                         
                         while ((argAddress = sr.ReadLine()) != null)
                         {
-                            jsonGeoCodeResponse = GeoCodeAddress(argAddress, apiKey);
+                        googleResponse = GeoCodeAddress(argAddress, apiKey);
 
                             if (displayJsonOutput == true)
                             {
-                                Console.WriteLine(jsonGeoCodeResponse);
+                                Console.WriteLine(googleResponse.jsonServerResponse);
                             }
 
                             if (argOutputFile != null)
                             {
-                                WriteResultsToFile(argAddress, jsonGeoCodeResponse, outputFile);
+                                
+                                WriteResultsToFile(argAddress, googleResponse, outputFile);
                             }
                             else
                             {
-                                WriteResultsToConsole(argAddress, jsonGeoCodeResponse);
+                                WriteResultsToConsole(argAddress, googleResponse);
                             }
 
                         }
@@ -254,17 +266,28 @@ namespace alfredhall
         }//endof main method
 
 
+
+
+
+
+
+
         private static void PrintUsageExample()
         {
-            Console.WriteLine("\nUsage: GoogleGeoCode [[-a Address]|[-i InputFile]] [-o OutputFile] [-j]");
+            Console.WriteLine("\nUsage: GoogleGeoCode [-h][[[-a Address]|[-i InputFile]] [-o OutputFile] [-j]]");
+            Console.WriteLine("GoogleGeoCode -h     will display this help message");
         }
 
+        
 
-        private static String GeoCodeAddress(String argAddress, String apiKey)
+
+            private static GoogleMapsResponse GeoCodeAddress(String argAddress, String apiKey)
         {
             //url encode argument address
             argAddress = WebUtility.UrlEncode(argAddress);
 
+            //for testing purposes, maybe should make this a 
+            //command line argument for displaying current address being processed
             Console.WriteLine(argAddress);
 
             string requestUri = "https://maps.googleapis.com/maps/api/geocode/json?" + "address=" + argAddress + "&key=" + apiKey;
@@ -289,27 +312,66 @@ namespace alfredhall
             {
                 //todo  RETRY a few times
                 Console.WriteLine(ex.Message);
-                if (response != null && ((HttpWebResponse)response).StatusDescription != null)
-                { 
-                    Console.WriteLine(((HttpWebResponse)response).StatusDescription);
+                if (response != null)
+                {
+                    if (((HttpWebResponse)response) != null)
+                    {
+                        String strDescription = ((HttpWebResponse)response).StatusDescription;
+                        Console.WriteLine(strDescription);
+                    }
                 }
                 return null;
             }
-            
+
 
             reader.Close();
             response.Close();
 
-            return responseFromServer;
+
+            if (responseFromServer != null)
+            {
+                //deserialize the json response
+                GoogleMapsResponse googResp = JsonConvert.DeserializeObject<GoogleMapsResponse>(responseFromServer);
+                googResp.jsonServerResponse = responseFromServer;
+                return googResp;
+            }
+
+
+            return null;
         }
 
 
 
-        private static void WriteResultsToFile(String searchAddress, String jsonGeoCodeResponse, StreamWriter outputFile)
-        {
-            //deserialize the json response
-            GoogleMapsResponse googResp = JsonConvert.DeserializeObject<GoogleMapsResponse>(jsonGeoCodeResponse);
 
+        
+
+        private static void WriteResultsToFile(String searchAddress, GoogleMapsResponse googResp, StreamWriter outputFile)
+        {
+            if( googResp == null)
+            {
+                return;
+            }
+
+
+            /*
+                Check the status code that was returned from Google
+              
+                Status Codes
+
+                The "status" field within the Geocoding response object contains the status of the request, and may contain debugging information to help you track down why geocoding is not working. The "status" field may contain the following values:
+
+                "OK" indicates that no errors occurred; the address was successfully parsed and at least one geocode was returned.
+                
+                "ZERO_RESULTS" indicates that the geocode was successful but returned no results. This may occur if the geocoder was passed a non-existent address.
+                
+                "OVER_QUERY_LIMIT" indicates that you are over your quota.
+                
+                "REQUEST_DENIED" indicates that your request was denied.
+                
+                "INVALID_REQUEST" generally indicates that the query (address, components or latlng) is missing.
+                
+                "UNKNOWN_ERROR" indicates that the request could not be processed due to a server error. The request may succeed if you try again.
+             */
 
             if (googResp.status == "OK")
             {
@@ -333,6 +395,12 @@ namespace alfredhall
                     outputFile.WriteLine(searchAddress + "|" + "|" + "|");
                 }
             }
+            if( googResp.status == "OVER_QUERY_LIMIT")
+            {
+                //exit the application
+                //Environment.Exit( exitCode );
+                //first close out any open file handles
+            }
             else
             {
                 Console.WriteLine(googResp.error_message);
@@ -340,10 +408,13 @@ namespace alfredhall
         }
 
 
-        private static void WriteResultsToConsole(String searchAddress, String jsonGeoCodeResponse)
+        private static void WriteResultsToConsole(String searchAddress, GoogleMapsResponse googResp)
         {
-            //deserialize the json response
-            GoogleMapsResponse googResp = JsonConvert.DeserializeObject<GoogleMapsResponse>(jsonGeoCodeResponse);
+            if (googResp == null)
+            {
+                return;
+            }
+            
 
 
             if (googResp.status == "OK")
